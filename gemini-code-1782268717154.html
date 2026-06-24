@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chung Shan Flight Booking Adventure</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        /* Fixed font stack specifically for iPad/iPhone fallbacks */
+        body, input, select, button, textarea {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: #e0f2fe; 
+            color: #334155;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .header-banner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 20px;
+            border: 4px solid #0284c7;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+        .airplane-logo-svg {
+            width: 70px;
+            height: 70px;
+            filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.15));
+        }
+        h1 {
+            color: #0284c7;
+            margin: 5px 0 0 0;
+            font-size: 24px;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 5px solid #7dd3fc;
+            position: relative;
+        }
+        .step-view {
+            display: none;
+        }
+        .step-view.active {
+            display: block;
+        }
+        h2 {
+            color: #0369a1;
+            border-bottom: 3px dashed #bae6fd;
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .step-indicator {
+            font-size: 12px;
+            background: #0284c7;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            white-space: nowrap;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+            clear: both;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #0f172a;
+            font-size: 15px;
+        }
+
+        /* Prevent iOS default styling overrides on inputs and buttons */
+        input[type="text"], input[type="number"], input[type="date"], select {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            padding: 12px;
+            border: 3px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            background-color: #ffffff;
+        }
+        .grid-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+        
+        /* Catering specific layout adjustments for images */
+        .catering-grid {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        }
+        
+        .option-card {
+            border: 3px solid #cbd5e1;
+            border-radius: 15px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            overflow: hidden;
+        }
+        .option-card.selected {
+            border-color: #0284c7;
+            background: #e0f2fe;
+            transform: scale(0.98);
+        }
+        .option-card svg {
+            width: 65px;
+            height: 65px;
+            margin-bottom: 6px;
+        }
+        .option-card span {
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        /* Food and Drink Menu Image Styling */
+        .menu-img {
+            width: 100%;
+            max-width: 110px;
+            height: 85px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            margin-bottom: 6px;
+            background-color: #cbd5e1;
+        }
+
+        .camera-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 15px;
+            border: 3px dashed #cbd5e1;
+        }
+        .camera-container {
+            position: relative;
+            width: 280px;
+            height: 210px;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #webcam, #photo-preview {
+            width: 280px;
+            height: 210px;
+            object-fit: cover;
+        }
+        #photo-preview {
+            display: none;
+        }
+
+        /* 2D Double Scroll Container Frame for Rows 1-40 / Columns A-K */
+        .cabin-scroll-container {
+            max-height: 320px;
+            overflow: auto;
+            background: #f1f5f9;
+            border: 3px dashed #cbd5e1;
+            border-radius: 15px;
+            padding: 10px;
+            -webkit-overflow-scrolling: touch; /* Smooth swiping on iOS */
+        }
+        .cabin-map {
+            display: inline-flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 5px;
+        }
+        .cabin-row {
+            display: grid;
+            grid-template-columns: repeat(10, 42px);
+            gap: 6px;
+            align-items: center;
+        }
+        .row-label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #475569;
+            background: #cbd5e1;
+            border-radius: 4px;
+            padding: 3px 8px;
+            text-align: center;
+            margin-top: 4px;
+            position: sticky;
+            left: 0;
+            display: inline-block;
+            width: max-content;
+        }
+        .plane-seat {
+            height: 36px;
+            background: #ffffff;
+            border: 2px solid #94a3b8;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .plane-seat.selected {
+            background: #22c55e !important;
+            border-color: #16a34a !important;
+            color: white;
+        }
+        .selected-seat-banner {
+            background: #e0f2fe;
+            border: 2px solid #0284c7;
+            padding: 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 12px;
+            color: #0369a1;
+            font-size: 14px;
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            gap: 10px;
+        }
+        .btn {
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-prev { background-color: #64748b; }
+        .btn-next { background-color: #22c55e; }
+        .btn-action { font-size: 13px; padding: 8px 14px; border-radius: 8px; }
+        
+        #boarding-pass-container { display: none; width: 100%; max-width: 820px; }
+        
+        /* Boarding Pass layout fixes for dynamic orientation sizes */
+        .boarding-pass {
+            background: #ffffff;
+            border: 5px solid #0369a1;
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            min-height: 250px;
+            overflow: hidden;
+        }
+        .pass-main { padding: 20px; flex: 3; border-right: 3px dashed #cbd5e1; display: flex; flex-direction: column; justify-content: space-between;}
+        .pass-stub { padding: 20px; flex: 1.2; background: #f8fafc; display: flex; flex-direction: column; justify-content: space-between;}
+        .pass-header { display: flex; justify-content: space-between; align-items: center; background: #0284c7; margin: -20px -20px 15px -20px; padding: 12px 20px; color: white; }
+        .pass-header h3 { margin: 0; font-size: 16px; }
+        .pass-branding-box { display: flex; align-items: center; gap: 10px; }
+        .pass-airline-logo-container { width: 38px; height: 38px; background: white; border-radius: 50%; padding: 3px; display: flex; align-items: center; justify-content: center; }
+        .pass-airline-logo-container svg { width: 28px; height: 28px; }
+        .pass-logo { font-weight: bold; background: white; color: #0284c7; padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;}
+        .pass-body-layout { display: flex; gap: 15px; }
+        .pass-info-grid { flex: 1; }
+        .pass-photo-frame { width: 95px; height: 115px; border: 3px solid #0f172a; background: #e2e8f0; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+        .pass-photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .pass-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .pass-col { flex: 1; }
+        .pass-label { font-size: 10px; color: #64748b; font-weight: bold; }
+        .pass-value { font-size: 14px; color: #0f172a; font-weight: bold; }
+        .barcode { height: 45px; background: linear-gradient(90deg, #000 2px, transparent 2px, transparent 4px, #000 4px, #000 5px, transparent 5px, transparent 8px, #000 8px, #000 11px); background-size: 28px 100%; margin-top: 10px; }
+
+        @media (max-width: 640px) {
+            .boarding-pass { flex-direction: column; }
+            .pass-main { border-right: none; border-bottom: 3px dashed #cbd5e1; }
+            .pass-stub { flex-direction: row; align-items: center; gap: 10px; }
+            .barcode { width: 100px; margin-top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-banner">
+        <svg class="airplane-logo-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 16V14 L13 9V3.5A1.5 1.5 0 0 0 11.5 2A1.5 1.5 0 0 0 10 3.5V9L2 14V16L10 13.5V19L8 20.5V22L11.5 21L15 22V20.5L13 19V13.5L21 16Z" fill="#0284c7"/>
+        </svg>
+        <h1>Chung Shan Flight Booking Adventure</h1>
+    </div>
+
+    <div class="container" id="wizard-container">
+        <div class="step-view active" id="step-1">
+            <h2>Step 1: Who is traveling? <span class="step-indicator">1 / 7</span></h2>
+            <div class="form-group">
+                <label for="student-name">Full Name:</label>
+                <input type="text" id="student-name" placeholder="Enter name..." required>
+            </div>
+            <div class="form-group">
+                <label>Gender:</label>
+                <div class="grid-options" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="option-card" data-type="gender" data-value="Male">
+                        <span style="font-size: 32px;">👦</span><span>Male</span>
+                    </div>
+                    <div class="option-card" data-type="gender" data-value="Female">
+                        <span style="font-size: 32px;">👧</span><span>Female</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="student-age">Age (Optional):</label>
+                <input type="number" id="student-age" placeholder="Age...">
+            </div>
+            <div class="form-group">
+                <label>Capture Passport Photo:</label>
+                <div class="camera-box">
+                    <div class="camera-container">
+                        <video id="webcam" autoplay playsinline></video>
+                        <canvas id="photo-canvas" style="display:none;" width="320" height="240"></canvas>
+                        <img id="photo-preview" alt="Preview">
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" class="btn btn-action" id="start-camera-btn">📷 Start Camera</button>
+                        <button type="button" class="btn btn-action" id="snap-btn" style="background-color:#22c55e; display:none;">📸 Take Photo</button>
+                        <button type="button" class="btn btn-action" id="retake-btn" style="background-color:#ef4444; display:none;">🔄 Retake</button>
+                    </div>
+                </div>
+            </div>
+            <div class="navigation-buttons">
+                <div></div>
+                <button type="button" class="btn btn-next" onclick="nextStep(1)">Next Step ➡️</button>
+            </div>
+        </div>
+
+        <div class="step-view" id="step-2">
+            <h2>Step 2: Choose your Airline <span class="step-indicator">2 / 7</span></h2>
+            <div class="grid-options">
+                <div class="option-card" data-type="airline" data-value="Starlux">
+                    <svg viewBox="0 0 100 60"><rect width="100" height="60" rx="10" fill="#1e293b"/><polygon points="50,15 65,40 35,40" fill="#d97706"/><circle cx="50" cy="28" r="4" fill="#ffffff"/></svg>
+                    <span>STARLUX</span>
+                </div>
+                <div class="option-card" data-type="airline" data-value="Eva Air">
+                    <svg viewBox="0 0 100 60"><rect width="100" height="60" rx="10" fill="#047857"/><circle cx="50" cy="30" r="16" fill="none" stroke="#ea580c" stroke-width="4"/><polygon points="50,10 54,25 68,25 56,34 60,48 50,38 40,48 44,34 32,25 46,25" fill="#d97706"/></svg>
+                    <span>EVA AIR</span>
+                </div>
+                <div class="option-card" data-type="airline" data-value="China Airlines">
+                    <svg viewBox="0 0 100 60"><rect width="100" height="60" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/><path d="M50,12 C40,25 35,35 50,48 C65,35 60,25 50,12 Z" fill="#f43f5e" opacity="0.8"/><path d="M45,20 C38,28 38,34 48,42" fill="none" stroke="#3b82f6" stroke-width="2"/></svg>
+                    <span>CHINA AIRLINES</span>
+                </div>
+                <div class="option-card" data-type="airline" data-value="Tiger Air">
+                    <svg viewBox="0 0 100 60"><rect width="100" height="60" rx="10" fill="#f59e0b"/><path d="M10,0 L20,60 M30,0 L25,60 M50,0 L45,60 M70,0 L75,60 M90,0 L80,60" stroke="#000000" stroke-width="6" opacity="0.8"/></svg>
+                    <span>TIGER AIR</span>
+                </div>
+                <div class="option-card" data-type="airline" data-value="Cathay Pacific">
+                    <svg viewBox="0 0 100 60"><rect width="100" height="60" rx="10" fill="#006564"/><path d="M25,35 C35,32 55,20 75,28 C60,28 45,35 25,35 Z" fill="#ffffff"/><path d="M40,26 L48,15 L52,16 L46,26 Z" fill="#ffffff"/></svg>
+                    <span>CATHAY PACIFIC</span>
+                </div>
+                <div class="option-card" data-type="airline" data-value="Korean Air">
+                    <svg viewBox="0 0 100 60"><rect width="100" height="60" rx="10" fill="#0093dd"/><circle cx="50" cy="30" r="14" fill="#ffffff"/><path d="M36,30 C36,22 50,22 50,30 C50,38 64,38 64,30 C64,22 36,22 36,30 Z" fill="#c60c30"/><path d="M50,30 C50,22 64,22 64,30 C64,38 50,38 50,30 Z" fill="#003478"/></svg>
+                    <span>KOREAN AIR</span>
+                </div>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn btn-prev" onclick="prevStep(2)">⬅️ Back</button>
+                <button type="button" class="btn btn-next" onclick="nextStep(2)">Next Step ➡️</button>
+            </div>
+        </div>
+
+        <div class="step-view" id="step-3">
+            <h2>Step 3: Destination Country <span class="step-indicator">3 / 7</span></h2>
+            <div class="grid-options">
+                <div class="option-card" data-type="country" data-value="USA">
+                    <svg viewBox="0 0 30 16"><rect width="30" height="16" fill="#bd3d3a"/><path d="M0,1.23h30M0,3.69h30M0,6.15h30M0,8.61h30M0,11.07h30M0,13.53h30" stroke="#ffffff" stroke-width="1.23"/><rect width="12" height="8.61" fill="#1b3d6d"/></svg>
+                    <span>USA</span>
+                </div>
+                <div class="option-card" data-type="country" data-value="France">
+                    <svg viewBox="0 0 30 20"><rect width="10" height="20" fill="#002395"/><rect x="10" width="10" height="20" fill="#ffffff"/><rect x="20" width="10" height="20" fill="#ed2939"/></svg>
+                    <span>France</span>
+                </div>
+                <div class="option-card" data-type="country" data-value="Italy">
+                    <svg viewBox="0 0 30 20"><rect width="10" height="20" fill="#009246"/><rect x="10" width="10" height="20" fill="#ffffff"/><rect x="20" width="10" height="20" fill="#ce2b37"/></svg>
+                    <span>Italy</span>
+                </div>
+                <div class="option-card" data-type="country" data-value="Japan">
+                    <svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/><circle cx="15" cy="10" r="6" fill="#bc002d"/></svg>
+                    <span>Japan</span>
+                </div>
+                <div class="option-card" data-type="country" data-value="Great Britain">
+                    <svg viewBox="0 0 30 15"><rect width="30" height="15" fill="#00247d"/><path d="M0,0 L30,15 M30,0 L0,15" stroke="#ffffff" stroke-width="3"/><path d="M0,0 L30,15 M30,0 L0,15" stroke="#cf142b" stroke-width="1"/><path d="M15,0 V15 M0,7.5 H30" stroke="#ffffff" stroke-width="5"/><path d="M15,0 V15 M0,7.5 H30" stroke="#cf142b" stroke-width="3"/></svg>
+                    <span>Great Britain</span>
+                </div>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn btn-prev" onclick="prevStep(3)">⬅️ Back</button>
+                <button type="button" class="btn btn-next" onclick="nextStep(3)">Next Step ➡️</button>
+            </div>
+        </div>
+
+        <div class="step-view" id="step-4">
+            <h2>Step 4: Pick Your Aircraft Seat <span class="step-indicator">4 / 7</span></h2>
+            <p style="font-size:13px; margin:0 0 10px 0; color:#64748b;">&larr; Swipe left/right and up/down to browse rows 1-40 &rarr;</p>
+            <div class="cabin-scroll-container">
+                <div class="cabin-map" id="airplane-cabin-map"></div>
+            </div>
+            <div class="selected-seat-banner" id="seat-selection-status">No Seat Selected Yet</div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn btn-prev" onclick="prevStep(4)">⬅️ Back</button>
+                <button type="button" class="btn btn-next" onclick="nextStep(4)">Next Step ➡️</button>
+            </div>
+        </div>
+
+        <div class="step-view" id="step-5">
+            <h2>Step 5: Luggage Allowance <span class="step-indicator">5 / 7</span></h2>
+            <div class="grid-options">
+                <div class="option-card" data-type="weight" data-value="15kg"><span>🧳 15 kg</span></div>
+                <div class="option-card" data-type="weight" data-value="23kg"><span>🧳 23 kg</span></div>
+                <div class="option-card" data-type="weight" data-value="49kg"><span>🧳 49 kg</span></div>
+            </div>
+            <select id="luggage-count" style="margin-top:20px;">
+                <option value="1">1 Bag</option>
+                <option value="2">2 Bags</option>
+            </select>
+            <div class="navigation-buttons">
+                <button type="button" class="btn btn-prev" onclick="prevStep(5)">⬅️ Back</button>
+                <button type="button" class="btn btn-next" onclick="nextStep(5)">Next Step ➡️</button>
+            </div>
+        </div>
+
+        <div class="step-view" id="step-6">
+            <h2>Step 6: Choose Food & Drink <span class="step-indicator">6 / 7</span></h2>
+            
+            <label>In-flight Meal:</label>
+            <div class="grid-options catering-grid">
+                <div class="option-card" data-type="food" data-value="Carbonara">
+                    <img class="menu-img" src="Menu item images/Carbonara.png" alt="Carbonara">
+                    <span>🍝 Carbonara</span>
+                </div>
+                <div class="option-card" data-type="food" data-value="Egg and Ham">
+                    <img class="menu-img" src="Menu item images/Egg and Ham.png" alt="Egg and Ham">
+                    <span>🍳 Egg & Ham</span>
+                </div>
+                <div class="option-card" data-type="food" data-value="Cheeseburger">
+                    <img class="menu-img" src="Menu item images/Cheeseburger.png" alt="Cheeseburger">
+                    <span>🍔 Cheeseburger</span>
+                </div>
+                <div class="option-card" data-type="food" data-value="Sweet and Sour Fish">
+                    <img class="menu-img" src="Menu item images/Sweet and Sour Fish.png" alt="Sweet and Sour Fish">
+                    <span>🐟 Sweet/Sour Fish</span>
+                </div>
+                <div class="option-card" data-type="food" data-value="Bacon Hamburger">
+                    <img class="menu-img" src="Menu item images/Bacon Hamburger.jpg" alt="Bacon Hamburger">
+                    <span>🥓 Bacon Burger</span>
+                </div>
+                <div class="option-card" data-type="food" data-value="Fish and Rice">
+                    <img class="menu-img" src="Menu item images/Fish and Rice.jpg" alt="Fish and Rice">
+                    <span>🍚 Fish & Rice</span>
+                </div>
+            </div>
+            
+            <label style="margin-top:20px;">In-flight Drink:</label>
+            <div class="grid-options catering-grid">
+                <div class="option-card" data-type="drink" data-value="Coke">
+                    <img class="menu-img" src="Menu item images/Coke.png" alt="Coke">
+                    <span>🥤 Coke</span>
+                </div>
+                <div class="option-card" data-type="drink" data-value="Sprite">
+                    <img class="menu-img" src="Menu item images/Sprite.png" alt="Sprite">
+                    <span>🥤 Sprite</span>
+                </div>
+                <div class="option-card" data-type="drink" data-value="Water">
+                    <img class="menu-img" src="Menu item images/Water.jpg" alt="Water">
+                    <span>💧 Water</span>
+                </div>
+                <div class="option-card" data-type="drink" data-value="Coffee">
+                    <img class="menu-img" src="Menu item images/Coffee.jpg" alt="Coffee">
+                    <span>☕ Coffee</span>
+                </div>
+            </div>
+            
+            <div class="navigation-buttons">
+                <button type="button" class="btn btn-prev" onclick="prevStep(6)">⬅️ Back</button>
+                <button type="button" class="btn btn-next" onclick="nextStep(6)">Next Step ➡️</button>
+            </div>
+        </div>
+
+        <div class="step-view" id="step-7">
+            <h2>Step 7: Flight Schedule <span class="step-indicator">7 / 7</span></h2>
+            <div class="form-group">
+                <label for="flight-date">Departure Date:</label>
+                <input type="date" id="flight-date" required>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn btn-prev" onclick="prevStep(7)">⬅️ Back</button>
+                <button type="button" class="btn btn-next" style="background-color:#9333ea;" onclick="generateBoardingPass()">Print Ticket 🎫</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="boarding-pass-container">
+        <div id="pass-card" style="background: #ffffff; padding: 10px; border-radius: 15px;">
+            <div class="boarding-pass">
+                <div class="pass-main">
+                    <div class="pass-header">
+                        <div class="pass-branding-box">
+                            <div class="pass-airline-logo-container" id="ticket-main-logo"></div>
+                            <h3 id="ticket-airline-name">AIRLINE</h3>
+                        </div>
+                        <div class="pass-logo">BOARDING PASS</div>
+                    </div>
+                    <div class="pass-body-layout">
+                        <div class="pass-info-grid">
+                            <div class="pass-row">
+                                <div class="pass-col">
+                                    <div class="pass-label">PASSENGER NAME</div>
+                                    <div class="pass-value" id="pass-val-name">-</div>
+                                </div>
+                            </div>
+                            <div class="pass-row">
+                                <div class="pass-col">
+                                    <div class="pass-label">FROM</div>
+                                    <div class="pass-value">TAIPEI (TPE)</div>
+                                </div>
+                                <div class="pass-col">
+                                    <div class="pass-label">TO</div>
+                                    <div class="pass-value" id="pass-val-to">-</div>
+                                </div>
+                            </div>
+                            <div class="pass-row">
+                                <div class="pass-col">
+                                    <div class="pass-label">SEAT</div>
+                                    <div class="pass-value" id="pass-val-seat">-</div>
+                                </div>
+                                <div class="pass-col">
+                                    <div class="pass-label">DATE</div>
+                                    <div class="pass-value" id="pass-val-date">-</div>
+                                </div>
+                            </div>
+                            <div class="pass-row">
+                                <div class="pass-col">
+                                    <div class="pass-label">MEAL & DRINK</div>
+                                    <div class="pass-value" id="pass-val-catering" style="font-size:12px;">-</div>
+                                </div>
+                                <div class="pass-col">
+                                    <div class="pass-label">LUGGAGE</div>
+                                    <div class="pass-value" id="pass-val-luggage">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pass-photo-frame" id="pass-val-photo-frame">👤</div>
+                    </div>
+                </div>
+
+                <div class="pass-stub">
+                    <div>
+                        <div class="pass-label">FLIGHT SEAT</div>
+                        <div class="pass-value" id="pass-stub-seat" style="font-size: 22px; color: #0369a1;">-</div>
+                    </div>
+                    <div>
+                        <div class="pass-label">PASSENGER</div>
+                        <div class="pass-value" id="pass-stub-name" style="font-size: 12px; white-space: nowrap; overflow: hidden;">-</div>
+                    </div>
+                    <div>
+                        <div class="pass-label">DESTINATION</div>
+                        <div class="pass-value" id="pass-stub-to">-</div>
+                    </div>
+                    <div class="barcode"></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 25px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <button type="button" class="btn" id="download-pass-pdf-btn" style="background-color: #0284c7;">📥 Download PDF</button>
+            <button type="button" class="btn" id="download-pass-img-btn" style="background-color: #eab308;">🖼️ Save as Image</button>
+            <button type="button" class="btn" style="background-color: #ef4444;" onclick="restartWizard()">🔄 Start Again</button>
+        </div>
+    </div>
+
+    <script>
+        const selections = {
+            gender: '',
+            airline: '',
+            country: '',
+            seat: '',
+            weight: '',
+            food: '',
+            drink: '',
+            photoData: null
+        };
+
+        let localStream = null;
+
+        // Clean event click tracking optimized for iPad WebKit
+        document.querySelectorAll('.option-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const type = this.getAttribute('data-type');
+                const value = this.getAttribute('data-value');
+                
+                document.querySelectorAll(`.option-card[data-type="${type}"]`).forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                selections[type] = value;
+            });
+        });
+
+        // Safe Camera Access Handler
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('photo-canvas');
+        const photoPreview = document.getElementById('photo-preview');
+        const startBtn = document.getElementById('start-camera-btn');
+        const snapBtn = document.getElementById('snap-btn');
+        const retakeBtn = document.getElementById('retake-btn');
+
+        startBtn.addEventListener('click', async () => {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 320, height: 240, facingMode: "user" }, 
+                    audio: false 
+                });
+                video.srcObject = localStream;
+                video.play().catch(e => console.log(e));
+                
+                video.style.display = 'block';
+                photoPreview.style.display = 'none';
+                startBtn.style.display = 'none';
+                snapBtn.style.display = 'inline-block';
+            } catch (err) {
+                alert("Camera unavailable or blocked. You can still fill out the layout steps!");
+            }
+        });
+
+        snapBtn.addEventListener('click', () => {
+            if (!localStream) return;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL ? canvas.toDataURL('image/jpeg') : canvas.toDataURL();
+            selections.photoData = dataUrl;
+            
+            photoPreview.src = dataUrl;
+            photoPreview.style.display = 'block';
+            video.style.display = 'none';
+            snapBtn.style.display = 'none';
+            retakeBtn.style.display = 'inline-block';
+        });
+
+        retakeBtn.addEventListener('click', () => {
+            selections.photoData = null;
+            retakeBtn.style.display = 'none';
+            startBtn.click();
+        });
+
+        // Re-engineered Seating Map: Rows 1-40 & Columns A-K (omitting I)
+        const cabinMap = document.getElementById('airplane-cabin-map');
+        const seatLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K'];
+        const totalRows = 40;
+
+        for (let r = 1; r <= totalRows; r++) {
+            const label = document.createElement('div');
+            label.className = 'row-label';
+            label.innerText = `Row ${r}`;
+            cabinMap.appendChild(label);
+
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'cabin-row';
+            
+            seatLetters.forEach((letter) => {
+                const seatCode = `${r}${letter}`;
+                const seatElement = document.createElement('div');
+                seatElement.className = 'plane-seat';
+                seatElement.innerText = seatCode;
+                
+                seatElement.addEventListener('click', function() {
+                    document.querySelectorAll('.plane-seat').forEach(s => s.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selections.seat = seatCode;
+                    document.getElementById('seat-selection-status').innerText = `Selected Seat: ${seatCode} ✈️`;
+                });
+                
+                rowDiv.appendChild(seatElement);
+            });
+            cabinMap.appendChild(rowDiv);
+        }
+
+        // Sequential Form Wizard Navigation
+        function nextStep(step) {
+            if (step === 1) {
+                if (!document.getElementById('student-name').value.trim()) { alert("Please write your name!"); return; }
+                if (!selections.gender) { alert("Please select your gender!"); return; }
+            }
+            if (step === 2 && !selections.airline) { alert("Please pick an airline!"); return; }
+            if (step === 3 && !selections.country) { alert("Please choose your destination country!"); return; }
+            if (step === 4 && !selections.seat) { alert("Please choose an airplane seat row coordinate!"); return; }
+            if (step === 5 && !selections.weight) { alert("Please select your luggage limits!"); return; }
+            if (step === 6 && (!selections.food || !selections.drink)) { alert("Please choose your meal and drink options!"); return; }
+
+            if (step === 1 && localStream) {
+                localStream.getTracks().forEach(t => t.stop());
+            }
+
+            document.getElementById(`step-${step}`).classList.remove('active');
+            document.getElementById(`step-${step + 1}`).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        function prevStep(step) {
+            document.getElementById(`step-${step}`).classList.remove('active');
+            document.getElementById(`step-${step - 1}`).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        // Assemble Boarding Pass Output Fields
+        function generateBoardingPass() {
+            const dateVal = document.getElementById('flight-date').value;
+            if (!dateVal) { alert("Please select a departure date!"); return; }
+
+            const nameVal = document.getElementById('student-name').value.trim();
+            const bagsCount = document.getElementById('luggage-count').value;
+
+            document.getElementById('pass-val-name').innerText = nameVal.toUpperCase();
+            document.getElementById('pass-stub-name').innerText = nameVal.toUpperCase();
+            document.getElementById('pass-val-to').innerText = selections.country.toUpperCase();
+            document.getElementById('pass-stub-to').innerText = selections.country.toUpperCase();
+            document.getElementById('pass-val-seat').innerText = selections.seat;
+            document.getElementById('pass-stub-seat').innerText = selections.seat;
+            document.getElementById('pass-val-date').innerText = dateVal;
+            document.getElementById('pass-val-luggage').innerText = `${bagsCount} Bag(s) / ${selections.weight}`;
+            document.getElementById('pass-val-catering').innerText = `${selections.food} & ${selections.drink}`;
+
+            const photoFrame = document.getElementById('pass-val-photo-frame');
+            if (selections.photoData) {
+                photoFrame.innerHTML = `<img src="${selections.photoData}">`;
+            } else {
+                photoFrame.innerText = selections.gender === 'Male' ? '👦' : '👧';
+            }
+
+            // Find match vector content safely from selection options
+            const activeCardSvg = document.querySelector(`.option-card[data-value="${selections.airline}"] svg`);
+            const targetLogoSlot = document.getElementById('ticket-main-logo');
+            if (activeCardSvg) {
+                targetLogoSlot.innerHTML = activeCardSvg.outerHTML;
+            } else {
+                targetLogoSlot.innerHTML = "✈️";
+            }
+            document.getElementById('ticket-airline-name').innerText = selections.airline.toUpperCase();
+
+            document.getElementById('wizard-container').style.display = 'none';
+            document.getElementById('boarding-pass-container').style.display = 'block';
+            window.scrollTo(0,0);
+        }
+
+        // File Save/Print Logic Engines
+        document.getElementById('download-pass-pdf-btn').addEventListener('click', function() {
+            const passengerName = document.getElementById('student-name').value.trim() || 'Passenger';
+            const passElement = document.getElementById('pass-card');
+            const config = {
+                margin: 10,
+                filename: `FlightTicket_${passengerName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+            html2pdf().set(config).from(passElement).save();
+        });
+
+        document.getElementById('download-pass-img-btn').addEventListener('click', function() {
+            const passengerName = document.getElementById('student-name').value.trim() || 'Passenger';
+            if (typeof html2pdf !== 'undefined') {
+                const element = document.getElementById('pass-card');
+                html2pdf().set({ margin: 5, html2canvas: { scale: 2, useCORS: true } }).from(element).output('img').then(function(imgElement) {
+                    const anchor = document.createElement('a');
+                    anchor.href = imgElement.src;
+                    anchor.download = `FlightTicket_${passengerName}.png`;
+                    document.body.appendChild(anchor);
+                    anchor.click();
+                    document.body.removeChild(anchor);
+                }).catch(() => showFallbackMessage());
+            } else {
+                showFallbackMessage();
+            }
+        });
+
+        function showFallbackMessage() {
+            alert("iPad/Chromebook Image Save Mode: Hold down the card for 2 seconds and select 'Add to Photos'.");
+        }
+
+        function restartWizard() { location.reload(); }
+    </script>
+</body>
+</html>
